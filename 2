@@ -1,0 +1,47 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const faceapi = require('face-api.js');
+const canvas = require('canvas');
+
+// Configuração do multer para upload de imagens
+const upload = multer({ dest: 'uploads/' });
+
+const app = express();
+const PORT = 3000;
+
+// Serve arquivos estáticos (como o modelo da face-api.js)
+app.use(express.static('public'));
+
+// Endpoint para receber a imagem e fazer a análise
+app.post('/analyze', upload.single('image'), async (req, res) => {
+  const imagePath = path.join(__dirname, req.file.path);
+
+  // Carregar o modelo da face-api.js
+  const img = await canvas.loadImage(imagePath);
+  await faceapi.nets.ssdMobilenetv1.loadFromDisk('./models');
+
+  // Detectar o rosto
+  const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+
+  if (!detections) {
+    return res.json({ error: "Não foi possível detectar um rosto." });
+  }
+
+  // Processamento para gerar sugestões (você pode melhorar essa lógica com base nos dados faciais)
+  const suggestions = {
+    eyes: 'Olho grande',
+    mouth: 'Boca média',
+    nose: 'Nariz reto',
+    eyebrow: 'Sobrancelha espessa',
+    contour: 'Contorno fino',
+  };
+
+  // Retornar as sugestões ao frontend
+  res.json({ suggestions });
+});
+
+// Inicializa o servidor
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
