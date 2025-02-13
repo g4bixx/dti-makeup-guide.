@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customizador de Rosto - Dress to Impress</title>
+  <style>
+    #result { margin-top: 20px; }
+    #preview { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Faça o upload de uma foto para personalizar o rosto!</h1>
+  <input type="file" id="fileInput" accept="image/*">
+  <button onclick="analyzeImage()">Analisar Foto</button>
+
+  <div id="result">
+    <h2>Resultado da Análise</h2>
+    <p id="suggestion">Aguardando imagem...</p>
+  </div>
+
+  <div id="preview">
+    <h2>Prévia do Rosto</h2>
+    <img id="facePreview" src="" alt="Prévia do rosto" width="200">
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+  <script>
+    // Função para carregar a imagem e passar para a API de reconhecimento facial
+    async function analyzeImage() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      if (!file) return alert('Por favor, envie uma imagem!');
+
+      // Exibe a imagem carregada
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      document.getElementById('facePreview').src = img.src;
+
+      // Espera a imagem ser carregada e então usa o face-api.js para análise
+      img.onload = async () => {
+        await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+        const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+        
+        if (!detections) {
+          document.getElementById('suggestion').innerText = "Não foi possível detectar um rosto na imagem.";
+          return;
+        }
+
+        // Aqui você pode enviar os dados da imagem para seu backend para obter sugestões
+        const faceData = {
+          faceDescriptor: detections.descriptor,
+        };
+
+        // Simulação de resposta da API de sugestão
+        document.getElementById('suggestion').innerText = "Sugestões para o rosto: Olho grande, boca média, nariz reto.";
+      };
+    }
+  </script>
+</body>
+</html>
